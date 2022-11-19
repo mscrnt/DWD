@@ -118,7 +118,19 @@ class MyModel(tf.keras.Model):
     else:
       return x
 
-model = MyModel(
+class CustomTraining(MyModel):
+  @tf.function
+  def train_step(self, inputs):
+      inputs, labels = inputs
+      with tf.GradientTape() as tape:
+          predictions = self(inputs, training=True)
+          loss = self.loss(labels, predictions)
+      grads = tape.gradient(loss, model.trainable_variables)
+      self.optimizer.apply_gradients(zip(grads, model.trainable_variables))
+
+      return {'loss': loss}
+
+model = CustomTraining(
     vocab_size=vocab_size,
     embedding_dim=embedding_dim,
     rnn_units=rnn_units)
@@ -134,9 +146,9 @@ sampled_indices = tf.squeeze(sampled_indices, axis=-1).numpy()
 
 #print(sampled_indices)
 
-print("Input:\n", text_from_ids(input_example_batch[0]).numpy())
-print()
-print("Next Char Predictions:\n", text_from_ids(sampled_indices).numpy())
+#print("Input:\n", text_from_ids(input_example_batch[0]).numpy())
+#print()
+#print("Next Char Predictions:\n", text_from_ids(sampled_indices).numpy())
 
 loss = tf.losses.SparseCategoricalCrossentropy(from_logits=True)
 
@@ -146,7 +158,8 @@ print("Mean loss:        ", example_batch_mean_loss)
 
 print(tf.exp(example_batch_mean_loss).numpy())
 
-model.compile(optimizer='adam', loss=loss)
+model.compile(optimizer = tf.keras.optimizers.Adam(),
+              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True))
 
 # Directory where the checkpoints will be saved
 checkpoint_dir = './training_checkpoints'
@@ -212,6 +225,7 @@ states = None
 next_char = tf.constant(['Chapter One'])
 result = [next_char]
 
+
 for n in range(1000):
   next_char, states = one_step_model.generate_one_step(next_char, states=states)
   result.append(next_char)
@@ -220,3 +234,53 @@ result = tf.strings.join(result)
 end = time.time()
 print(result[0].numpy().decode('utf-8'), '\n\n' + '_'*80)
 print('\nRun time:', end - start)
+
+"""
+tf.saved_model.save(one_step_model, 'one_step')
+one_step_reloaded = tf.saved_model.load('one_step')
+
+states = None
+next_char = tf.constant(['Chapter One'])
+result = [next_char]
+
+for n in range(1000):
+  next_char, states = one_step_reloaded.generate_one_step(next_char, states=states)
+  result.append(next_char)
+
+print(tf.strings.join(result)[0].numpy().decode("utf-8"))
+end = time.time()
+print('_'*80)
+print('\nRun time:', end - start)
+
+"""
+
+
+"""
+
+EPOCHS = 1
+
+mean = tf.metrics.Mean()
+
+for epoch in range(EPOCHS):
+    start = time.time()
+
+    mean.reset_states()
+    for (batch_n, (inp, target)) in enumerate(dataset):
+        logs = model.train_step([inp, target])
+        mean.update_state(logs['loss'])
+
+        if batch_n % 50 == 0:
+            template = f"Epoch {epoch+1} Batch {batch_n} Loss {logs['loss']:.4f}"
+            print(template)
+
+    # saving (checkpoint) the model every 5 epochs
+    if (epoch + 1) % 5 == 0:
+        model.save_weights(checkpoint_prefix.format(epoch=epoch))
+
+    print()
+    print(f'Epoch {epoch+1} Loss: {mean.result().numpy():.4f}')
+    print(f'Time taken for 1 epoch {time.time() - start:.2f} sec')
+    print("_"*80)
+
+model.save_weights(checkpoint_prefix.format(epoch=epoch))
+"""

@@ -61,3 +61,8 @@ training_checkpoints/ckpt_29.data-00000-of-00001
 training_checkpoints/ckpt_29.index
 training_checkpoints/ckpt_30.data-00000-of-00001
 training_checkpoints/ckpt_30.index
+one_step/saved_model.pb
+one_step/variables/variables.data-00000-of-00001
+one_step/variables/variables.index
+training_checkpoints/ckpt_0.data-00000-of-00001
+training_checkpoints/ckpt_0.index
