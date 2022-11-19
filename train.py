@@ -170,7 +170,7 @@ checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
     filepath=checkpoint_prefix,
     save_weights_only=True)
 
-EPOCHS = 10
+EPOCHS = 12
 
 history = model.fit(dataset, epochs=EPOCHS, callbacks=[checkpoint_callback])
 
@@ -222,7 +222,7 @@ one_step_model = OneStep(model, chars_from_ids, ids_from_chars)
 
 start = time.time()
 states = None
-next_char = tf.constant(['Chapter One'])
+next_char = tf.constant(['Chapter '])
 result = [next_char]
 
 
@@ -232,6 +232,8 @@ for n in range(1000):
 
 result = tf.strings.join(result)
 end = time.time()
+with open('Completed_Story.txt', 'w', encoding='utf-8') as outfile:
+  outfile.write(result[0].numpy().decode('utf-8'))
 print(result[0].numpy().decode('utf-8'), '\n\n' + '_'*80)
 print('\nRun time:', end - start)
 
