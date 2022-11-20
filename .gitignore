@@ -132,3 +132,5 @@ Scripts/pyftmerge.exe
 Scripts/pyftsubset.exe
 Scripts/ttx.exe
 share/man/man1/ttx.1
+lstm_beam_search_dropout
+lstm.csv
